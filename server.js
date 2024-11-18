@@ -1,20 +1,10 @@
-const grpc = require("@grpc/grpc-js");
-const protoLoader = require("@grpc/proto-loader");
-const path = require("path");
+const grpc = require('@grpc/grpc-js');
+const protoDescriptor = require('./config');  // Esto debe cargar el archivo proto correctamente
+const matrixProto = protoDescriptor.MatrixService;
 
-// Load and define the proto file
-const packageDefinition = protoLoader.loadSync(path.join(__dirname, "balancer.proto"), {
-  keepCase: true,
-  longs: String,
-  enums: String,
-  defaults: true,
-  oneofs: true,
-});
-const matrixProto = grpc.loadPackageDefinition(packageDefinition).MatrixService;
-
+// Función Gauss-Jordan
 function gaussJordan(matrix) {
   const n = matrix.length;
-
   for (let i = 0; i < n; i++) {
     // Verificar pivote y manejar cero en el pivote
     if (matrix[i][i] === 0) {
@@ -26,7 +16,7 @@ function gaussJordan(matrix) {
           break;
         }
       }
-      if (!swapped) throw new Error("No tiene solución única.");
+      if (!swapped) throw new Error('No tiene solución única.');
     }
 
     // Normalizar la fila del pivote
@@ -45,20 +35,20 @@ function gaussJordan(matrix) {
       }
     }
   }
-
   return matrix;
 }
 
+// Implementar la solicitud de resolver el sistema (Gauss-Jordan)
 function solveSystem(call, callback) {
   try {
     // Convertir de Row[] a matriz bidimensional
-    const inputMatrix = call.request.values.map((row) => row.elements);
+    const inputMatrix = call.request.values.map(row => row.elements);
 
-    // Resolver el sistema
+    // Resolver el sistema con Gauss-Jordan
     const resultMatrix = gaussJordan(inputMatrix);
 
     // Convertir de matriz bidimensional a Row[]
-    const solution = resultMatrix.map((row) => ({ elements: row }));
+    const solution = resultMatrix.map(row => ({ elements: row }));
 
     callback(null, { solution });
   } catch (error) {
@@ -69,12 +59,13 @@ function solveSystem(call, callback) {
   }
 }
 
-// Start the gRPC server
+// Iniciar el servidor
 function main() {
   const server = new grpc.Server();
   server.addService(matrixProto.service, { SolveSystem: solveSystem });
-  server.bindAsync("0.0.0.0:50051", grpc.ServerCredentials.createInsecure(), () => {
-    console.log("gRPC server listening on port 50051");
+
+  server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
+    console.log('Servidor con Gauss-Jordan escuchando en el puerto 50051');
     server.start();
   });
 }
