@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+service MatrixService {
+  rpc SolveSystem (MatrixRequest) returns (MatrixResponse);
+}
+
+message MatrixRequest {
+  repeated Row values = 1;
+}
+
+message MatrixResponse {
+  repeated Row solution = 1;
+}
+
+message Row {
+  repeated double elements = 1;
+}
